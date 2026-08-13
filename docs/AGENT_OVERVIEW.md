@@ -79,11 +79,67 @@ description).
     shared module because Vite (frontend) and Vercel (each serverless
     function) bundle completely separately — a plain JSON import works on
     both sides, a shared `.js` file with logic wouldn't. `api/_profile.js`
-    holds the actual resume facts and system prompt; it's inherently
-    person-specific, not a swappable config.
+    holds the system prompt itself and derives a `FIRST_NAME` from
+    `profile.json` rather than hardcoding anyone's name/pronouns, so facts
+    (`profile.json`) and identity/tone (`agent.config.json`) really are the
+    only two files someone needs to edit for the common case.
 - **Config-driven scheduling**: `timezone`, `meetingDurationMinutes`,
   `availability` in `agent.config.json` — currently every day, 11am–6pm
   Central, 20-minute meetings.
+
+### System diagram
+
+```mermaid
+flowchart TD
+  Visitor(["Visitor's browser"])
+
+  subgraph Frontend["Frontend — React"]
+    UI["VoiceOrb.jsx (corner orb) /<br/>Talk.jsx (/talk page)"]
+  end
+
+  subgraph Backend["Backend — Vercel serverless functions"]
+    Ask["api/ask.js<br/>Gemini function-calling loop"]
+    Speak["api/speak.js"]
+    Calendar["api/_calendar.js"]
+    Confirm["api/_bookingConfirm.js"]
+    LeaveMsg["api/_leaveMessage.js"]
+    RateLimit["api/_rateLimit.js /<br/>api/_dailyCap.js"]
+    Email["api/_email.js"]
+    Cron["api/cron-reminders.js<br/>(Vercel Cron, daily)"]
+  end
+
+  subgraph External["External services"]
+    Gemini[("Gemini API")]
+    GCal[("Google Calendar API")]
+    DB[("Neon Postgres")]
+    ResendSvc[("Resend")]
+    TTS[("Google Cloud TTS")]
+  end
+
+  Visitor --> UI
+  UI -->|"POST /api/ask"| Ask
+  UI -->|"POST /api/speak"| Speak
+
+  Ask -->|"generateContent + tools"| Gemini
+  Ask --> RateLimit
+  Ask -->|"check_availability / book_meeting /<br/>find_booking / cancel / reschedule"| Calendar
+  Ask -->|"stage + confirm_action"| Confirm
+  Ask -->|"leave_message"| LeaveMsg
+
+  RateLimit -->|"atomic cooldown / daily cap"| DB
+  Calendar -->|"OAuth refresh, freeBusy, events"| GCal
+  Calendar -->|"claim / read / remove slot"| DB
+  Confirm -->|"store / consume code"| DB
+  Confirm -->|"email the code"| Email
+  LeaveMsg -->|"save lead"| DB
+  LeaveMsg -->|"notify owner"| Email
+  Email -->|"send"| ResendSvc
+
+  Speak -->|"synthesize speech"| TTS
+
+  Cron -->|"due bookings"| DB
+  Cron -->|"reminder emails"| Email
+```
 
 ## One-time setup still required
 
