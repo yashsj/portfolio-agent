@@ -295,28 +295,42 @@ const BookingCard = ({ card }) => {
 // [^\s]+ would swallow the trailing `]`/`)` into the link itself and mangle
 // the display text.
 const URL_PATTERN = /(https?:\/\/[^\s\])]+)/g;
+// Trailing sentence punctuation the regex above doesn't (and can't safely)
+// exclude from the match itself — a period mid-URL is legitimate (".pdf"),
+// so the character class can't just ban it outright. Confirmed live: a
+// reply ending "...here: https://.../resume.pdf." baked the trailing "."
+// into the href, producing a broken link (404, or an unexpected page
+// depending on how the server handles it) — exactly what "the resume link
+// is wrong" turned out to be. Stripped off *after* matching instead,
+// re-attached as plain text following the link — same approach every real
+// autolinker (GitHub, Slack, ...) uses.
+const TRAILING_PUNCTUATION = /[.,!?;:'")]+$/;
 const Linkify = ({ text, linkColor }) => {
   const parts = text.split(URL_PATTERN);
-  return parts.map((part, i) =>
+  return parts.map((part, i) => {
     // Not URL_PATTERN.test(part) — that regex has the `g` flag, which makes
     // .test() stateful (advances lastIndex across calls), so reusing it in
     // this loop would alternate true/false incorrectly instead of testing
     // each part independently.
-    /^https?:\/\//.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ color: linkColor, textDecoration: "underline" }}
-        onClick={e => e.stopPropagation()}
-      >
-        {part}
-      </a>
-    ) : (
-      <span key={i}>{part}</span>
-    )
-  );
+    if (!/^https?:\/\//.test(part)) return <span key={i}>{part}</span>;
+    const trailingMatch = part.match(TRAILING_PUNCTUATION);
+    const trailing = trailingMatch ? trailingMatch[0] : "";
+    const url = trailing ? part.slice(0, -trailing.length) : part;
+    return (
+      <span key={i}>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: linkColor, textDecoration: "underline" }}
+          onClick={e => e.stopPropagation()}
+        >
+          {url}
+        </a>
+        {trailing}
+      </span>
+    );
+  });
 };
 
 const EXAMPLE_CYCLE_MS = 3400;
