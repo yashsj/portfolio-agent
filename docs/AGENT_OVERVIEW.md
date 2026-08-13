@@ -1,27 +1,27 @@
-# AI Agent, Voice Mode, and Game Portal — Overview
+# AI Agent & Voice Mode — Overview
 
-Reference doc for everything built on top of the portfolio site's conversational
-AI agent: architecture, personalization, data handling, and security posture.
-Written as a snapshot after the initial buildout + a security audit; update it
-when the underlying systems change materially.
+Reference doc for the conversational AI agent: architecture, personalization,
+data handling, and security posture. This is the doc this template was
+extracted from a real production deployment alongside — the security section
+in particular documents a live-tested audit, not a hypothetical one. Update
+it when the underlying systems change materially.
 
 ## What it is
 
-A grounded Q&A agent embedded on the site (bottom-left corner orb on the
-homepage, plus a standalone `/talk` page) that answers questions about Suyash
-using only real resume facts — never invents dates, employers, numbers, or
-skills. It also supports real actions via tool-calling: checking live Google
-Calendar availability and booking real meetings.
+A grounded Q&A agent (bottom-left corner orb, plus a standalone `/talk` page)
+that answers questions about whoever's in `profile.json`, using only the
+facts in that file — never invents dates, employers, numbers, or skills. It
+also supports real actions via tool-calling: checking live Google Calendar
+availability and booking real meetings.
 
-Persona: "Jarvis to Tony Stark" — a sharp, upbeat British AI aide (name and
-tone are config-driven, see `agent.config.json`'s `personaName`/
-`personaDescription`; this was Alfred/butler-toned earlier, swapped for a
-livelier register — same voice, `en-GB-Neural2-B`, just retuned pitch/rate
-rather than a different voice entirely).
-
-There's also a hidden easter egg: a portal in the ASCII game world (atop the
-bamboo-tower platforming challenge in the cave/skills zone) that drops
-visitors into `/talk` if they find and reach it.
+Persona (name, tone, voice pitch/rate) is entirely config-driven — see
+`agent.config.json`'s `personaName`/`personaDescription` and `api/speak.js`'s
+`VOICE_PITCH`/`VOICE_SPEAKING_RATE`. The demo ships with a deliberately plain
+placeholder persona ("the agent," straightforward and neutral) rather than a
+baked-in character — write your own in `agent.config.json`, no code changes
+needed (see `api/_profile.js`'s `voiceStyleBlock` if you want to go further
+and rewrite the actual tone-of-voice instructions, not just the name/one-line
+description).
 
 ## Architecture
 
@@ -106,9 +106,7 @@ Everything below is the complete list of what touches the database:
 | `daily_counters` | A single count integer | Global daily question cap | No personal data at all |
 | `booked_slots` | Slot time, visitor's name + email | Prevents double-booking; used to create the real Calendar invite | The one table with real PII — same category of data any Calendly-style tool collects |
 | `booking_confirmations` | Email, a short-lived 6-digit code, the pending action | Gates cancel/reschedule behind proof the requester controls that inbox | Row is deleted on use (or superseded by a fresh request); `expires_at` (5 min) makes any stragglers harmless either way |
-| `lead_messages` | Visitor's message, optional name + email | Private leads left via the `leave_message` tool, for visitors who skip scheduling | Never displayed publicly (unlike `messages`/guestbook below); owner-only |
-| `scores` | Nickname + score | Public Snake-game leaderboard | Visitor-submitted, publicly displayed by design (`GET /api/scores`) |
-| `messages` | Nickname + message | Public guestbook | Visitor-submitted, publicly displayed by design (`GET /api/messages`) |
+| `lead_messages` | Visitor's message, optional name + email | Private leads left via the `leave_message` tool, for visitors who skip scheduling | Never displayed publicly; owner-only |
 
 **Conversation history is never sent to the database.** It lives only in the
 visitor's own browser (`sessionStorage`), shared between the corner orb and
@@ -159,8 +157,8 @@ product; no cross-site tracking.
   revalidation can't be bypassed by manipulating conversation history; the
   post-fix cancel attempt confirmed `find_booking`/`confirm_action` can't be
   socially engineered into skipping the code check.
-- **Rate limiting**: every write endpoint (`ask`, `speak`, `messages`,
-  `scores`) has it; `scores` was found missing it during the audit and fixed.
+- **Rate limiting**: every write endpoint (`ask`, `speak`) has it — see
+  `api/_rateLimit.js`.
 
 ## Deferred / not built
 
@@ -188,14 +186,18 @@ product; no cross-site tracking.
 - `docs/CALENDAR_OAUTH_SETUP.md` — step-by-step Google Cloud Console
   walkthrough for the three Calendar env vars, since scheduling is the one
   feature that needs manual one-time setup rather than just an env var.
-- `api/_profile.js` — the actual resume facts + system prompt (person-specific,
-  rewritten wholesale for a different person, not a config)
+- `api/_profile.js` — the system prompt itself (tone-of-voice instructions,
+  ground rules). Facts come from `profile.json`; this file derives a
+  `FIRST_NAME` from it and stays pronoun-neutral throughout, so the common
+  case really is edit-the-two-JSON-files-only — but if you want a distinct
+  written voice beyond `agent.config.json`'s one-line `personaDescription`,
+  this is the file with the actual prose to rewrite.
 - `api/ask.js`, `api/_calendar.js`, `api/speak.js` — backend logic
 - `src/hooks/useAgentConversation.js`, `src/components/AgentVoiceStage.jsx`,
   `src/components/AgentOrb.jsx` — shared frontend logic/UI/visual
 - `src/components/VoiceOrb.jsx`, `src/pages/Talk.jsx` — the two entry points
-- `src/components/AsciiBackground.jsx` — the game world, including the portal
-  easter egg (search for "Anomaly")
+- `src/App.jsx` — the demo landing page; replace with your real site, nothing
+  else in this repo depends on what it looks like
 
 ## Interview questions this project can support
 
