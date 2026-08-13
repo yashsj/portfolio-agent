@@ -5,6 +5,8 @@ own facts, checks real Google Calendar availability, books real meetings,
 never invents an answer. Text + voice, embeddable as a corner launcher or a
 standalone `/talk` page.
 
+![Demo of the agent's orb — idle breathing, drag reactivity, and the demo persona's greeting/example prompts](docs/assets/demo.gif)
+
 Built for developers putting this on their own portfolio site, not
 non-technical users — full setup below takes about 15 minutes for Q&A-only,
 longer if you want real calendar booking.
