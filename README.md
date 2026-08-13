@@ -12,7 +12,7 @@ longer if you want real calendar booking.
 ## Quickstart (Q&A only, ~5 minutes)
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/yashsj/portfolio-agent.git
 cd portfolio-agent
 npm install
 cp .env.example .env.local

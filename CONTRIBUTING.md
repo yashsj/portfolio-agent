@@ -5,7 +5,7 @@ Issues and PRs are welcome — for a bug fix or small improvement, just open a P
 ## Dev setup
 
 ```bash
-git clone <this-repo-url>
+git clone https://github.com/yashsj/portfolio-agent.git
 cd portfolio-agent
 npm install
 cp .env.example .env.local   # fill in at least POSTGRES_URL and GEMINI_API_KEY
