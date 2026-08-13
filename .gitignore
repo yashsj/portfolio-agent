@@ -1,0 +1,19 @@
+# Node.js dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+# Next.js/React static output
+.next/
+out/
+# System junk
+.DS_Store
+*.log
+*.swp
+# Miscellaneous — .env* alone would also match .env.example, which is meant
+# to be committed (placeholders only, no real secrets) as the template for
+# .env.local. Negated explicitly rather than narrowing the pattern, so any
+# future .env.<anything> file stays safely excluded by default.
+.env*
+!.env.example
+.vercel

@@ -1,0 +1,51 @@
+{
+  "name": "Ada Chen",
+  "location": "Austin, TX",
+  "contact": {
+    "phone": "+1 (555) 010-0100",
+    "linkedin": "linkedin.com/in/example",
+    "github": "github.com/example"
+  },
+  "resumeUrl": "https://example.com/resume.pdf",
+  "summary": "This is placeholder data so the agent works the moment you clone this repo — replace every field in this file with your own facts. Ada Chen is a fictional backend engineer used only to demonstrate the agent answering grounded questions about real resume data.",
+  "workExperience": [
+    {
+      "company": "Example Corp",
+      "title": "Senior Backend Engineer",
+      "dates": "Jan 2022 – Present, Remote",
+      "highlights": [
+        "Replace this with a real, specific accomplishment — a number, a system, an outcome. The agent is only as good as what's in this file; it never invents facts beyond what's here.",
+        "Each highlight becomes something the agent can talk about naturally, so write them like sentences a person would actually say, not resume-bullet fragments."
+      ]
+    },
+    {
+      "company": "Prior Company",
+      "title": "Software Engineer",
+      "dates": "Jun 2019 – Dec 2021, San Francisco, CA",
+      "highlights": [
+        "Another placeholder highlight — delete this whole entry if you only have one job to list, or add more entries for a longer history."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "BSc Computer Science",
+      "school": "Example University",
+      "dates": "2015–2019",
+      "gpa": null,
+      "coursework": "List relevant coursework here, or delete this field's content — it's still required as a string, just keep it short if it's not important."
+    }
+  ],
+  "skills": {
+    "Languages": ["Python", "JavaScript", "SQL"],
+    "Infrastructure": ["AWS", "Docker", "Postgres"]
+  },
+  "projects": [
+    {
+      "name": "This Agent",
+      "description": "the thing you're talking to right now — a conversational agent that answers grounded questions from this file, checks live calendar availability, and books real meetings. See README.md to make it yours."
+    }
+  ],
+  "availability": "Replace with a real line about what you're currently open to — new roles, collaborations, freelance work, whatever's true.",
+  "personal": "A sentence or two of real personality — hobbies, interests, whatever makes the agent's answers sound like a person and not a resume PDF. This is placeholder text; write your own."
+}

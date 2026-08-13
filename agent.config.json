@@ -1,0 +1,35 @@
+{
+  "contactEmail": "you@example.com",
+  "greeting": "Hi, I'm Ada's agent. Ask me about her work, have me book time with her, or just tap the mic to talk.",
+  "idlePrompt": "Say something…",
+  "examplePrompts": [
+    "What's her tech stack?",
+    "Can I grab time with her?",
+    "Tell me about her most recent role"
+  ],
+  "orbTheme": {
+    "nearColor": [30, 90, 180],
+    "farColor": [3, 8, 18],
+    "background": "radial-gradient(circle at 50% 42%, rgba(30,90,180,0.16) 0%, rgba(10,25,55,0.10) 30%, rgba(2,4,10,1) 70%)",
+    "pageBg": "#02040a",
+    "accent": "rgba(60,130,220,1)",
+    "accentSoft": "rgba(150,190,230,0.55)",
+    "textColor": "#eef4ff"
+  },
+  "personaName": "the agent",
+  "personaDescription": "a grounded, straightforward assistant who knows Ada's work well and answers plainly — never a corporate FAQ bot reciting a resume line by line",
+  "timezone": "America/Chicago",
+  "meetingDurationMinutes": 20,
+  "limits": {
+    "dailyQuestionCap": 900,
+    "askCooldownSeconds": 8,
+    "speakCooldownSeconds": 8
+  },
+  "availability": [
+    { "day": 1, "startHour": 9, "endHour": 17 },
+    { "day": 2, "startHour": 9, "endHour": 17 },
+    { "day": 3, "startHour": 9, "endHour": 17 },
+    { "day": 4, "startHour": 9, "endHour": 17 },
+    { "day": 5, "startHour": 9, "endHour": 17 }
+  ]
+}
