@@ -29,9 +29,20 @@ meetings on (`primary` calendar — see `api/_calendar.js`).
    step 4 below.
 4. Scopes: skip for now, added directly in step 4.
 5. Test users: add the Google account whose calendar you want the agent
-   booking on. While the app is in "Testing" status (the default, and fine
-   to leave it there indefinitely for personal use), only test users can
-   authorize it — which is exactly what you want here.
+   booking on.
+6. **Publish the app** (there's a "Publish App" button on this same screen)
+   before generating a refresh token in step 4 below. This matters more than
+   it looks: a refresh token obtained while the app is still in **Testing**
+   status silently **expires after 7 days**, no matter how often it's used
+   — the calendar tool will work fine for a week, then every booking
+   request will start failing with a `calendar token 400` error in your
+   logs, with no obvious cause unless you know to look for this. Publishing
+   removes that expiry. You don't need Google's full verification review to
+   publish for personal-scale use like this (that's only required to remove
+   the "unverified app" warning shown during authorization) — just click
+   Publish, accept the warning about unverified apps, and move on. Since
+   you're the only person who will ever authorize this app, that warning is
+   a non-issue.
 
 ## 3. Create an OAuth 2.0 Client ID
 
@@ -59,8 +70,8 @@ token is obtained once, manually, via Google's own OAuth Playground:
    `freeBusy` lookups, creating events, and deleting/cancelling them).
 4. Click **Authorize APIs**, sign in with the *same Google account* you
    added as a test user in step 2, and accept the consent screen (it'll
-   show a Google "unverified app" warning — expected, since this app is
-   intentionally left in Testing status; click through it).
+   show a Google "unverified app" warning — expected, since you haven't
+   gone through Google's formal verification review; click through it).
 5. Back in the Playground, click **Exchange authorization code for
    tokens**.
 6. Copy the **Refresh token** field — this is `GOOGLE_CALENDAR_REFRESH_TOKEN`.
@@ -95,6 +106,13 @@ should call `check_availability` and return real open slots from your
 calendar. If it instead says scheduling is unavailable, double check the
 three env vars are present and that the refresh token's scope (step 4.3)
 is exactly `https://www.googleapis.com/auth/calendar`.
+
+**If it worked initially and then stopped** (server logs show
+`check_availability error: Error: calendar token 400` at
+`getAccessToken`), this is almost certainly the Testing-mode 7-day refresh
+token expiry from step 2.6 above — check whether the OAuth consent screen
+is still in Testing status. If so, publish it and regenerate the refresh
+token (step 4); the old one is dead and won't come back on its own.
 
 ## Why a refresh token instead of a login flow
 
