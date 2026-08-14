@@ -60,11 +60,19 @@ CREATE TABLE IF NOT EXISTS booking_confirmations (
 -- api/_leaveMessage.js — private leads from visitors who don't want to book
 -- a call. Never displayed publicly (unlike a public guestbook/leaderboard,
 -- which are separate portfolio-site features, not part of the agent, and
--- intentionally not included in this file).
+-- intentionally not included in this file). category/company/role/urgency/
+-- summary come from api/_classifyLead.js's best-effort Gemini
+-- classification — all nullable, since classification can fail (timeout,
+-- API down) without ever blocking the lead itself from saving.
 CREATE TABLE IF NOT EXISTS lead_messages (
   id         SERIAL PRIMARY KEY,
   name       TEXT,
   email      TEXT,
   message    TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  category   TEXT,
+  company    TEXT,
+  role       TEXT,
+  urgency    TEXT,
+  summary    TEXT
 );

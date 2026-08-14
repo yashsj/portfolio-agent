@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { checkRateLimit } from './_rateLimit.js';
 import { checkDailyCap } from './_dailyCap.js';
-import { SYSTEM_PROMPT, FIRST_NAME } from './_profile.js';
+import { SYSTEM_PROMPT } from './_profile.js';
 import { CONTACT_EMAIL, MEETING_DURATION_MINUTES, DAILY_QUESTION_CAP, ASK_COOLDOWN_SECONDS } from './_agentConfig.js';
 import { CALENDAR_ENABLED, LEAVE_MESSAGE_ENABLED } from './_features.js';
 import {
@@ -11,9 +11,10 @@ import {
 import { saveLead, notifyOwner } from './_leaveMessage.js';
 import { createConfirmation, consumeConfirmation } from './_bookingConfirm.js';
 import { sendEmail } from './_email.js';
+import { classifyLead } from './_classifyLead.js';
 
 const FALLBACK_ANSWER =
-  `I'm having trouble answering right now — feel free to email ${FIRST_NAME} directly at ${CONTACT_EMAIL}.`;
+  `I'm having trouble answering right now — feel free to email Suyash directly at ${CONTACT_EMAIL}.`;
 
 // Only declare tools whose credentials are actually configured (see
 // _features.js) — Gemini can only call what's declared here, so this is
@@ -99,7 +100,7 @@ const cancelRescheduleTools = (CALENDAR_ENABLED && LEAVE_MESSAGE_ENABLED) ? [
 const leaveMessageTools = LEAVE_MESSAGE_ENABLED ? [
   {
     name: 'leave_message',
-    description: `Save a private message/question for ${FIRST_NAME} from a visitor who doesn't want to book a call. Use this when a visitor wants to leave a note, ask something that needs a real answer from ${FIRST_NAME}, or say they're interested but doesn't want to schedule right now. Get their message content first; name and email are optional but worth asking for conversationally if they want a reply.`,
+    description: "Save a private message/question for Suyash from a visitor who doesn't want to book a call. Use this when a visitor wants to leave a note, ask something that needs a real answer from Suyash, or say they're interested but doesn't want to schedule right now. Get their message content first; name and email are optional but worth asking for conversationally if they want a reply.",
     parameters: {
       type: 'OBJECT',
       properties: {
@@ -197,8 +198,8 @@ async function runTool(name, args, sql, timezone) {
       const code = await createConfirmation(sql, { email, action: 'cancel', oldSlotStart: slotStart });
       await sendEmail({
         to: email,
-        subject: `Confirm cancelling your chat with ${FIRST_NAME}`,
-        text: `Someone requested cancelling your ${match.label} chat with ${FIRST_NAME}.\n\nConfirmation code: ${code}\n\nRead this back to the agent to confirm. It expires in 5 minutes — if this wasn't you, just ignore this email and the booking stays as-is.`,
+        subject: 'Confirm cancelling your chat with Suyash',
+        text: `Someone requested cancelling your ${match.label} chat with Suyash.\n\nConfirmation code: ${code}\n\nRead this back to the agent to confirm. It expires in 5 minutes — if this wasn't you, just ignore this email and the booking stays as-is.`,
       });
       return { result: { codeSent: true, email } };
     } catch (err) {
@@ -226,8 +227,8 @@ async function runTool(name, args, sql, timezone) {
       const code = await createConfirmation(sql, { email, action: 'reschedule', oldSlotStart: oldSlot, newSlotStart: newSlot, visitorName });
       await sendEmail({
         to: email,
-        subject: `Confirm rescheduling your chat with ${FIRST_NAME}`,
-        text: `Someone requested moving your ${match.label} chat with ${FIRST_NAME} to ${matchedNewSlot.label}.\n\nConfirmation code: ${code}\n\nRead this back to the agent to confirm. It expires in 5 minutes — if this wasn't you, just ignore this email and the booking stays as-is.`,
+        subject: 'Confirm rescheduling your chat with Suyash',
+        text: `Someone requested moving your ${match.label} chat with Suyash to ${matchedNewSlot.label}.\n\nConfirmation code: ${code}\n\nRead this back to the agent to confirm. It expires in 5 minutes — if this wasn't you, just ignore this email and the booking stays as-is.`,
       });
       return { result: { codeSent: true, email } };
     } catch (err) {
@@ -294,10 +295,19 @@ async function runTool(name, args, sql, timezone) {
     const { message, name: visitorName, email } = args ?? {};
     if (!message?.trim()) return { result: { error: 'missing message' } };
     try {
+      const trimmedMessage = message.trim().slice(0, 1000);
+      // Best-effort classification (recruiter/collaboration/fan/spam,
+      // urgency, company/role if mentioned) — see _classifyLead.js. Runs
+      // before saveLead so the classification can be stored alongside the
+      // lead, not just used for the notification email; a failure here
+      // (classification returns null) never blocks saving the message
+      // itself.
+      const classification = await classifyLead(trimmedMessage);
       const entry = {
         name: visitorName?.trim().slice(0, 80) || null,
         email: email?.trim().slice(0, 254) || null,
-        message: message.trim().slice(0, 1000),
+        message: trimmedMessage,
+        classification,
       };
       await saveLead(sql, entry);
       await notifyOwner(entry);
@@ -399,7 +409,7 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'slow down a little and try again' });
 
   if (!(await checkDailyCap(sql, DAILY_QUESTION_CAP)))
-    return res.json({ answer: `This assistant has hit its daily question limit — please email ${FIRST_NAME} directly at ${CONTACT_EMAIL}.` });
+    return res.json({ answer: `This assistant has hit its daily question limit — please email Suyash directly at ${CONTACT_EMAIL}.` });
 
   // Widened from 4 to 10 — a visitor who gives their email while booking,
   // then asks a few more questions before circling back to cancel/reschedule,
